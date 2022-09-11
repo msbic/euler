@@ -125,3 +125,71 @@ let calcPrimesImp max =
 let pythTriplets a b c =
   a * a + b * b = c * c
 
+let generateTriangNumbers maxIndex =
+  let q = Queue.create ~capacity:maxIndex () in
+
+  Queue.enqueue q 1;
+  for i = 1 to maxIndex - 1 do
+    let prev = Queue.get q (i - 1) in
+    Queue.enqueue q (prev + i + 1);
+  done; q
+
+let countDivisors num =
+  let rec countDivisors' count idx num =
+    if idx >= num then count
+    else if num % idx = 0 then countDivisors' (count + 1) (idx + 1) num
+    else countDivisors' count (idx + 1) num
+  in
+  countDivisors' 0 1 num
+
+
+let findOrCreateSet table key =
+  match Hashtbl.find table key with
+  | None -> Hash_set.create (module Int) ~growth_allowed:true ~size:10
+  | Some set -> set
+
+
+let computeDiv num =
+  let set = Hash_set.create (module Int) ~growth_allowed:true ~size:10
+  in
+  for i = 1 to num / 2 do
+    if num % i = 0 then
+      Hash_set.add set i
+    else ();
+  done; set
+
+let countDivisorsImp table num =
+  (* let count = ref 0 in *)
+  for i = 1 to num / 2 do
+    if num % i = 0 then
+      let myset = findOrCreateSet table num in
+      Hash_set.add myset num;
+      if Hashtbl.mem table i then
+        let set3 = Hash_set.union myset (Hashtbl.find_exn table i) in
+        Hashtbl.set table ~key:num ~data:set3;
+      else
+
+        let s = computeDiv i in
+        let myset = Hash_set.union s myset in
+        Hash_set.add myset i;
+        Hashtbl.set table ~key:i ~data:s;
+        Hashtbl.set table ~key:num ~data:myset;
+      
+      (* Int.incr count *)
+    else ();
+  done; table 
+  
+let computeDivisors table num =
+  (* let table = Hashtbl.create (module Int) ~size:num ~growth_allowed:true in *)
+
+  for i = 1 to num / 2 do
+    for j = 1 to num do
+      let set = findOrCreateSet table j in
+      if j % i = 0 then
+        let seti = findOrCreateSet table i in
+        let setj = Hash_set.union seti set in
+        Hash_set.add setj j;
+        Hashtbl.set table ~key:j ~data:setj;
+      else ();
+    done;
+  done; table
